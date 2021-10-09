@@ -1,2 +1,2 @@
 # MiGreat
-A schema isolated SQLAlchemy migrator for shared Postgres db micro services
+A schema isolated Postgres migrator for shared database micro services
