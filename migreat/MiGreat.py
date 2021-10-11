@@ -12,12 +12,13 @@ import sys
 import time
 import yaml
 
+# Log config
+logger = logging.getLogger('MiGreat')
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setFormatter(logging.Formatter("%(levelname)s: %(asctime)s - %(message)s"))
+logger.addHandler(ch)
 
-logging.basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(levelname)s: %(asctime)s - %(message)s"
-)
 
 class Config(BaseModel):
     """
@@ -95,14 +96,14 @@ class MiGreat:
 
         args = parser.parse_args()
         if args.oper == MiGreat.OPER_INIT:
-            logging.info("Initializing MiGreat")
+            logger.info("Initializing MiGreat")
             os.mkdir(MiGreat.SCRIPTS_DIR)
             with open(MiGreat.TEMPLATES_DIR, "rt") as config_file:
                 config_template = config_file.read()
             with open(MiGreat.CONFIG_FILE, "wt") as config_file:
                 config_file.write(config_template)
-            logging.info("MiGreat initialized at ./")
-            logging.info("Please adjust defaults in ./MiGreat.yaml")
+            logger.info("MiGreat initialized at ./")
+            logger.info("Please adjust defaults in ./MiGreat.yaml")
 
         elif args.oper == MiGreat.OPER_CREATE:
             mg = MiGreat.from_yaml()
@@ -119,11 +120,11 @@ class MiGreat:
             Initializes and returns a MiGreat instance from the yaml configuration file.
         """
         if not os.path.exists(MiGreat.CONFIG_FILE):
-            logging.error("Couldn't find MiGreat config file.  Try initializing the space first.")
+            logger.error("Couldn't find MiGreat config file.  Try initializing the space first.")
             sys.exit(1)
 
         if not os.path.exists(MiGreat.SCRIPTS_DIR):
-            logging.error("Couldn't find MiGreat scripts directory.  Try initializing the space first.")
+            logger.error("Couldn't find MiGreat scripts directory.  Try initializing the space first.")
             sys.exit(1)
 
         with open(MiGreat.CONFIG_FILE) as config_file:
@@ -166,7 +167,7 @@ class MiGreat:
             template = m_tmpl.read()
         with open(os.path.join(MiGreat.SCRIPTS_DIR, migrator), "wt") as m_script:
             m_script.write(template)
-        logging.info(f"Wrote new migrator {migrator}")
+        logger.info(f"Wrote new migrator {migrator}")
 
     def upgrade(self):
         """
@@ -207,11 +208,11 @@ class MiGreat:
             row = result.fetchone()
             curr_ver = row[0]
             if curr_ver == highest_version:
-                logging.info("Migrations are already up to date")
+                logger.info("Migrations are already up to date")
                 sys.exit(0)
 
             if curr_ver > highest_version:
-                logging.error("Migration version in database exceeds that of the migration scripts")
+                logger.error("Migration version in database exceeds that of the migration scripts")
                 sys.exit(1)
 
         next_version = curr_ver + 1
@@ -227,11 +228,11 @@ class MiGreat:
             spec.loader.exec_module(module)
 
             if not hasattr(module, 'upgrade'):
-                logging.error(f"Migrator {script} does not have an upgrade method")
+                logger.error(f"Migrator {script} does not have an upgrade method")
                 sys.exit(1)
 
             if not hasattr(module, 'downgrade'):
-                logging.error(f"Migrator {script} does not have a downgrade method")
+                logger.error(f"Migrator {script} does not have a downgrade method")
                 sys.exit(1)
 
             if hasattr(module, 'CONFIG_OPTIONS'):
@@ -245,7 +246,7 @@ class MiGreat:
             engine = priv_engine if run_as_priv else service_engine
             session = Session(engine, future=not config.legacy_sqlalchemy)
 
-            logging.info(f"Migrating {next_version - 1} to {next_version}")
+            logger.info(f"Migrating {next_version - 1} to {next_version}")
             try:
                 if transact:
                     with session.begin():
@@ -255,7 +256,7 @@ class MiGreat:
                     module.upgrade(session)
                     self.__update_version(session, next_version)
             except:
-                logging.error("Migration failed", exc_info=1)
+                logger.error("Migration failed", exc_info=1)
                 sys.exit(1)
 
             next_version += 1
@@ -294,7 +295,7 @@ class MiGreat:
             if match is not None:
                 ver = int(match.groups()[0])
                 if ver in scripts_by_version:
-                    logging.error(f"Multiple migrators share version number {ver}")
+                    logger.error(f"Multiple migrators share version number {ver}")
                     sys.exit(1)
                 scripts_by_version[ver] = filename
                 highest_version = max(highest_version, ver)
@@ -303,7 +304,7 @@ class MiGreat:
         if highest_version:
             for ver in range(1, highest_version + 1):
                 if ver not in scripts_by_version:
-                    logging.error(f"Migrator {ver} is missing from the series")
+                    logger.error(f"Migrator {ver} is missing from the series")
                     sys.exit(1)
                 scripts.append(scripts_by_version[ver])
 
@@ -335,10 +336,10 @@ class MiGreat:
                     conn.execute(text("SELECT 1"))
                     break
             except OperationalError:
-                logging.info(f"Connection failed, waiting {retry_interval}s before retrying")
+                logger.info(f"Connection failed, waiting {retry_interval}s before retrying")
                 time.sleep(retry_interval)
         else:
-            logging.error(f"Unable to establish connection after {max_retries+1} attempts")
+            logger.error(f"Unable to establish connection after {max_retries+1} attempts")
             sys.exit(1)
 
         return engine
@@ -369,7 +370,7 @@ class MiGreat:
             )
             row = result.fetchone()
             if row is None:
-                logging.info(f'Creating user "{config.service_db_username}"')
+                logger.info(f'Creating user "{config.service_db_username}"')
                 conn.execute(
                     text(
                         f"CREATE USER \"{config.service_db_username}\" WITH ENCRYPTED PASSWORD :password"
@@ -388,7 +389,7 @@ class MiGreat:
             )
             row = result.fetchone()
             if row is None:
-                logging.info(f'Creating schema "{config.service_schema}"')
+                logger.info(f'Creating schema "{config.service_schema}"')
                 conn.execute(text(f"CREATE SCHEMA \"{config.service_schema}\""))
 
                 conn.execute(text(f"""
