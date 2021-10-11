@@ -1,0 +1,19 @@
+CONFIG_OPTIONS = {
+    "transact": True,           # Transact this migrator automatically
+    "run_as_priv": False,       # Run as the privileged database user (instead of the service user)
+}
+"""
+    These are all the available options on a per-migrator basis.  The options present have all
+    been defaulted.  You don't need to include this dict, though if you do, the options you specify
+    will be overlayed onto the defaults.
+"""
+
+def upgrade(conn):
+    """
+        Upgrades the database to the current defined migration version.
+    """
+
+def downgrade(conn):
+    """
+        *** DOWNGRADE SQL GOES HERE ***
+    """
