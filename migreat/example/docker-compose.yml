@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  migreat-database:
+    hostname: postgres
+    image: postgres:14.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - mi-test-db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  migreat-test:
+    build:
+      context: ../../
+      dockerfile: ./migreat/example/test/Dockerfile
+    depends_on:
+      - migreat-database
+    networks:
+    - backend
+
+volumes:
+  mi-test-db:
+
+networks:
+  backend:

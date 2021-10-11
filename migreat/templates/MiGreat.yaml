@@ -1,0 +1,37 @@
+# MiGreat configuration
+
+# Database host name
+hostname:
+
+# Database port
+port: 5432
+
+# Database name
+database:
+
+# Privileged database username
+priv_db_username: postgres
+
+# Privileged database password
+priv_db_password: ${PRIV_DB_PASSWORD}
+
+# Service database username
+service_db_username:
+
+# Service database password
+service_db_password: ${SVC_DB_PASSWORD}
+
+# Service database schema name
+service_schema:
+
+# Legacy sqlalchemy style (pre v2)
+legacy_sqlalchemy: false
+
+# Max connection retries
+max_conn_retries: 10
+
+# Connection retry interval (seconds)
+conn_retry_interval: 5
+
+# Migration table name
+migration_table: migrate_version
