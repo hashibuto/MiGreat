@@ -13,13 +13,13 @@ database:
 priv_db_username: postgres
 
 # Privileged database password
-priv_db_password: ${PRIV_DB_PASSWORD}
+priv_db_password: ${PRIVELEGED_DB_PASSWORD}
 
 # Service database username
 service_db_username:
 
 # Service database password
-service_db_password: ${SVC_DB_PASSWORD}
+service_db_password: ${SERVICE_DB_PASSWORD}
 
 # Service database schema name
 service_schema:
