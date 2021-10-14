@@ -254,7 +254,8 @@ class MiGreat:
                         self.__update_version(session, next_version)
                 else:
                     module.upgrade(session)
-                    self.__update_version(session, next_version)
+                    with session.begin():
+                        self.__update_version(session, next_version)
             except:
                 logger.error("Migration failed", exc_info=1)
                 sys.exit(1)

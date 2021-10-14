@@ -6,12 +6,14 @@ with open("./requirements.txt", "r") as req_file:
     requirements = [r for r in req_file.readlines() if r.strip()]
 
 setup(
-    name='migreat',
+    name='MiGreat',
     version='0.1.0',
     packages=find_packages(),
     author='Philip Stefou',
     author_email='hashibuto@noreply.com',
     description='A schema isolated SQLAlchemy migrator for shared Postgres db micro services',
+    long_description="README.md",
+    url="https://github.com/hashibuto/MiGreat",
     scripts=[
         "migreat/bin/migreat"
     ],
