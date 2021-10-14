@@ -97,8 +97,13 @@ class MiGreat:
         args = parser.parse_args()
         if args.oper == MiGreat.OPER_INIT:
             logger.info("Initializing MiGreat")
-            os.mkdir(MiGreat.SCRIPTS_DIR)
-            with open(MiGreat.TEMPLATES_DIR, "rt") as config_file:
+            try:
+                os.mkdir(MiGreat.SCRIPTS_DIR)
+            except FileExistsError:
+                logger.error(f"The directory {MiGreat.SCRIPTS_DIR} already exists")
+                sys.exit(1)
+
+            with open(os.path.join(MiGreat.TEMPLATES_DIR, "MiGreat.yaml"), "rt") as config_file:
                 config_template = config_file.read()
             with open(MiGreat.CONFIG_FILE, "wt") as config_file:
                 config_file.write(config_template)
