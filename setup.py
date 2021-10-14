@@ -1,4 +1,4 @@
-import os
+import pathlib
 from setuptools import setup, find_packages
 
 # Load the README.md
@@ -12,11 +12,15 @@ with open("./requirements.txt", "r") as req_file:
 
 setup(
     name='MiGreat-cli',
-    version='0.1.2',
+    version='0.1.3',
     packages=find_packages(),
     author='Philip Stefou',
     author_email='hashibuto@noreply.com',
     description='A schema isolated SQLAlchemy migrator for shared Postgres db micro services',
+    data_files=[
+        ('templates', [str(p) for p in pathlib.Path('migreat/templates').glob('**/*') if not p.is_dir()]),
+        ('example', [str(p) for p in pathlib.Path('migreat/example').glob('**/*') if not p.is_dir()]),
+    ],
     long_description=long_description,
     long_description_content_type='text/markdown',
     url="https://github.com/hashibuto/MiGreat",
