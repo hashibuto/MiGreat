@@ -8,7 +8,7 @@ Several micro services may share the same database backend, but it's important t
 
 ## Installation
 ```
-pip install MiGreat
+pip install MiGreat-cli
 ```
 
 ## How to migrate (and be great)

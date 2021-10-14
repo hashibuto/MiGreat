@@ -11,8 +11,8 @@ with open("./requirements.txt", "r") as req_file:
     requirements = [r for r in req_file.readlines() if r.strip()]
 
 setup(
-    name='MiGreat',
-    version='0.1.1',
+    name='MiGreat-cli',
+    version='0.1.2',
     packages=find_packages(),
     author='Philip Stefou',
     author_email='hashibuto@noreply.com',
