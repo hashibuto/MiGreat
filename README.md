@@ -103,6 +103,15 @@ conn_retry_interval: 5
 
 # Migration table name
 migration_table: migrate_version
+
+# Service group name (optional) - All service users will gain membership to this group, and this
+# group will be granted the USAGE permission on all schemas.  This basically allows the schema
+# itself to be seen, but no other read or otherwise access is implicitly granted.
+group:
+
+# This indicates that the migrator series has been terminated.  Upon subsequent upgrade, schema
+# and user will be deleted if existing.  (optional)
+dead: false
 ```
 
 `legacy_sqlalchemy` assumes the pre v2 way of writing SQL queries (meaning, largely, they don't need to be wrapped in `text()`).  The other options should be fairly self explanatory.

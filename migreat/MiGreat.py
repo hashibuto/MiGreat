@@ -41,6 +41,7 @@ class Config(BaseModel):
     max_conn_retries: int = 10
     conn_retry_interval: int = 5
     migration_table: str = "migrate_version"
+    dead: Optional[bool]
 
 
 class MiGreat:
@@ -184,9 +185,13 @@ class MiGreat:
             Runs migrators in order, starting with the next version.  Each migrator is
             independently transacted.  Migrations are always executed by the service user.
         """
+        config = self.config
+        if config.dead is True:
+            # Ensure all elements are deleted and then exit
+            self.__check_and_remove_migraton_controls()
+            return
         self.__check_and_apply_migration_controls()
         highest_version, scripts = self.__validate_migrator_scripts()
-        config = self.config
 
         priv_engine = self.__connect(
             config.hostname,
@@ -379,6 +384,54 @@ class MiGreat:
                     # Try to avoid collision by sleeping for a random time interval
                     time.sleep(.5 + random.random())
 
+    def __check_and_remove_migraton_controls(self):
+        """
+            Checks to determine if MiGreat's migration controls have been removed from the target
+            database, and removes them if they haven't been already.
+        """
+        config = self.config
+        engine = self.__connect(
+            self.config.hostname,
+            self.config.port,
+            self.config.database,
+            self.config.priv_db_username,
+            self.config.priv_db_password,
+            self.config.conn_retry_interval,
+            self.config.max_conn_retries,
+            False,
+        )
+
+        if config.group is not None:
+            with engine.begin() as conn:
+                result = conn.execute(text("""
+                    SELECT 1
+                    FROM pg_catalog.pg_roles cr
+                    JOIN pg_catalog.pg_auth_members m ON (m.member = cr.oid)
+                    JOIN pg_roles r ON (m.roleid = r.oid)
+                    WHERE
+                        cr.rolname = :username AND
+                        r.rolname = :group
+                """), {
+                    "username": config.service_db_username,
+                    "group": config.group,
+                })
+                is_group_member = result.fetchone() is not None
+                # Remove schema
+
+            if is_group_member:
+                self.__concurrency_protection(
+                    engine,
+                    text(f"""
+                        ALTER GROUP "{config.group}" DROP USER "{config.service_db_username}"
+                    """)
+                )
+
+            with engine.begin() as conn:
+                conn.execute(text(f"""
+                    DROP SCHEMA IF EXISTS "{config.service_schema}" CASCADE;
+                    DROP USER IF EXISTS "{config.service_db_username}";
+                """))
+
     def __check_and_apply_migration_controls(self):
         """
             Checks to determine if MiGreat's migration controls have been applied to the target
@@ -402,20 +455,20 @@ class MiGreat:
             # first time.
             try:
                 with engine.begin() as conn:
-                        # Check if group exists
-                        result = conn.execute(
-                            text("""
-                                SELECT 1 FROM pg_roles WHERE rolname = :group
-                            """),
-                            {
-                                "group": config.group,
-                            }
+                    # Check if group exists
+                    result = conn.execute(
+                        text("""
+                            SELECT 1 FROM pg_roles WHERE rolname = :group
+                        """),
+                        {
+                            "group": config.group,
+                        }
+                    )
+                    row = result.fetchone()
+                    if row is None:
+                        conn.execute(
+                            text(f"CREATE GROUP \"{config.group}\"")
                         )
-                        row = result.fetchone()
-                        if row is None:
-                            conn.execute(
-                                text(f"CREATE GROUP \"{config.group}\"")
-                            )
             except:
                 logging.info("Continuing... group probably created in parallel")
 

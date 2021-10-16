@@ -40,3 +40,7 @@ conn_retry_interval: 5
 
 # Migration table name
 migration_table: migrate_version
+
+# This indicates that the migrator series has been terminated.  Upon subsequent upgrade, schema
+# and user will be deleted if existing.  (optional)
+dead: false
