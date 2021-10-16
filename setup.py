@@ -12,9 +12,9 @@ with open("./requirements.txt", "r") as req_file:
 
 setup(
     name='MiGreat-cli',
-    version='0.1.7',
+    version='0.1.8',
     packages=find_packages(),
-    author='Philip Stefou',
+    author='Hashibuto',
     author_email='hashibuto@noreply.com',
     description='A schema isolated SQLAlchemy migrator for shared Postgres db micro services',
     data_files=[
