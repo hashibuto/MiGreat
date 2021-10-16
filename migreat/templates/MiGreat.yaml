@@ -24,6 +24,9 @@ service_db_password: ${SERVICE_DB_PASSWORD}
 # Service database schema name
 service_schema:
 
+# Service group name (optional)
+group:
+
 # Legacy sqlalchemy style (pre v2)
 legacy_sqlalchemy: false
 

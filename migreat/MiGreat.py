@@ -3,12 +3,16 @@ from glob import glob
 import importlib
 import logging
 import os
+from typing import Optional
 from pydantic import BaseModel
 import re
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import OperationalError
+import sqlalchemy
+from sqlalchemy import exc
+from sqlalchemy.exc import InternalError, OperationalError
 from sqlalchemy.orm import Session
 import sys
+import random
 import time
 import yaml
 
@@ -32,6 +36,7 @@ class Config(BaseModel):
     service_db_username: str
     service_db_password: str
     service_schema: str
+    group: Optional[str]
     legacy_sqlalchemy: bool = False
     max_conn_retries: int = 10
     conn_retry_interval: int = 5
@@ -350,6 +355,30 @@ class MiGreat:
 
         return engine
 
+    def __concurrency_protection(self, engine, query, bindings={}):
+        """
+            Certain first-time operations will create a concurrency violation within the database.
+            These operations need to be handled in separate transactions, and have a degree of
+            retry-ability before failing.
+        """
+        failure_retries = 5
+        while failure_retries > 0:
+            with engine.begin() as conn:
+                try:
+                    if bindings:
+                        conn.execute(query, bindings)
+                    else:
+                        conn.execute(query)
+                    return
+                except sqlalchemy.exc.InternalError:
+                    logging.info("Possible resource contention, retrying shortly.")
+                    failure_retries -= 1
+                    if failure_retries == 0:
+                        logging.error("Failed to prepare database", exc_info=1)
+                        sys.exit(1)
+                    # Try to avoid collision by sleeping for a random time interval
+                    time.sleep(.5 + random.random())
+
     def __check_and_apply_migration_controls(self):
         """
             Checks to determine if MiGreat's migration controls have been applied to the target
@@ -365,7 +394,31 @@ class MiGreat:
             self.config.max_conn_retries,
             False,
         )
+
         config = self.config
+        if config.group is not None:
+            # This block mitigates a race condition that can manifest as a failed transaction,
+            # when multiple different services attempt to create the non existant group for the
+            # first time.
+            try:
+                with engine.begin() as conn:
+                        # Check if group exists
+                        result = conn.execute(
+                            text("""
+                                SELECT 1 FROM pg_roles WHERE rolname = :group
+                            """),
+                            {
+                                "group": config.group,
+                            }
+                        )
+                        row = result.fetchone()
+                        if row is None:
+                            conn.execute(
+                                text(f"CREATE GROUP \"{config.group}\"")
+                            )
+            except:
+                logging.info("Continuing... group probably created in parallel")
+
         with engine.begin() as conn:
             # Check if the service user exists
             result = conn.execute(
@@ -455,6 +508,33 @@ class MiGreat:
                     GRANT ALL PRIVILEGES ON TABLE \"{config.service_schema}\".\"{config.migration_table}\"
                     TO \"{config.service_db_username}\"
                 """))
+
+            if config.group is not None:
+                result = conn.execute(text("""
+                    SELECT 1
+                    FROM pg_catalog.pg_roles cr
+                    JOIN pg_catalog.pg_auth_members m ON (m.member = cr.oid)
+                    JOIN pg_roles r ON (m.roleid = r.oid)
+                    WHERE
+                        cr.rolname = :username AND
+                        r.rolname = :group
+                """), {
+                    "username": config.service_db_username,
+                    "group": config.group,
+                })
+                is_group_member = result.fetchone() is not None
+
+
+        if config.group is not None and not is_group_member:
+            # This can easily happen at the same time in multiple services that are migrating
+            # concurrently for the first time.  We add some contention tollerance logic here.
+            self.__concurrency_protection(
+                engine,
+                text(f"""
+                    ALTER GROUP \"{config.group}\" ADD USER \"{config.service_db_username}\";
+                    GRANT USAGE ON SCHEMA \"{config.service_schema}\" TO GROUP \"{config.group}\";
+                """)
+            )
 
     __SCRIPT_MATCHER = re.compile("^(\d+)_.+.py$")
     """ Regular expression to match active migrator scripts """

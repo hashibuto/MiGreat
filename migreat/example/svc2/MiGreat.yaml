@@ -3,10 +3,11 @@
 hostname: postgres
 priv_db_username: postgres
 priv_db_password: postgres
-service_db_username: svc
-service_db_password: svcpass
-service_schema: svc
+service_db_username: ${SVC_USERNAME}
+service_db_password: ${SVC_PASSWORD}
+service_schema: svc2
 legacy_sqlalchemy: true
 max_conn_retries: 10
 conn_retry_interval: 5
 database: postgres
+group: svc_group
