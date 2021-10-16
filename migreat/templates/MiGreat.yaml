@@ -24,7 +24,9 @@ service_db_password: ${SERVICE_DB_PASSWORD}
 # Service database schema name
 service_schema:
 
-# Service group name (optional)
+# Service group name (optional) - All service users will gain membership to this group, and this
+# group will be granted the USAGE permission on all schemas.  This basically allows the schema
+# itself to be seen, but no other read or otherwise access is implicitly granted.
 group:
 
 # Legacy sqlalchemy style (pre v2)
