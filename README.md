@@ -108,11 +108,26 @@ migration_table: migrate_version
 `legacy_sqlalchemy` assumes the pre v2 way of writing SQL queries (meaning, largely, they don't need to be wrapped in `text()`).  The other options should be fairly self explanatory.
 
 ## FAQ
+---
 
 Q) Why called migreat?
 
 A) Because this functionality is great... why else :)
 
+---
+
 Q) What if I absolutely need to do something outside the scope of the schema, in a given migrator
 
 A) Honestly, I'm not sure how this plays from a philosophical standpoint, but the ability exists for use cases I haven't conceived yet.  This is what the `run_as_priv` option is for in the migrator's `CONFIG_OPTIONS`.  Maybe a service decides that it needs to include a Postgres extension, after the fact... Maybe some cross-schema fix needs to happen.  I don't know your use case, but it sounds dangerous.
+
+---
+
+Q) Can I grant some access across schemas?
+
+A) Yes, and while it's not recommended to do so, the ability exists.  In `MiGreat.yaml`, create a "group" entry:
+```
+group: <some_group_name>
+```
+This group will be granted the `USAGE` privilege to all schemas, and all service users will be given group membership.  You then have the freedom of opening up database entities such as tables, etc. to the group.
+
+---
