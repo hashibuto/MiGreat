@@ -12,10 +12,22 @@ services:
     networks:
       - backend
 
-  migreat-test:
+  migreat-svc1:
     build:
       context: ../../
-      dockerfile: ./migreat/example/test/Dockerfile
+      dockerfile: ./migreat/example/svc1/Dockerfile
+    depends_on:
+      - migreat-database
+    networks:
+    - backend
+
+  migreat-svc2:
+    build:
+      context: ../../
+      dockerfile: ./migreat/example/svc2/Dockerfile
+    environment:
+      - SVC_USERNAME=svc2
+      - SVC_PASSWORD=svc2pass
     depends_on:
       - migreat-database
     networks:

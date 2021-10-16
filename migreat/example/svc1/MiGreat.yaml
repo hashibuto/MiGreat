@@ -1,0 +1,13 @@
+# MiGreat configuration
+
+hostname: postgres
+priv_db_username: postgres
+priv_db_password: postgres
+service_db_username: svc1
+service_db_password: svc1pass
+service_schema: svc1
+legacy_sqlalchemy: true
+max_conn_retries: 10
+conn_retry_interval: 5
+database: postgres
+group: svc_group

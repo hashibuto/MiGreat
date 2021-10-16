@@ -10,12 +10,11 @@ RUN \
 
 COPY . /app/lib/migreat
 WORKDIR /app/lib/migreat
-RUN ls -la
 
-COPY ./migreat/example/test/requirements.txt /app/test/requirements.txt
-WORKDIR /app/test
+COPY ./migreat/example/svc1/requirements.txt /app/svc/requirements.txt
+WORKDIR /app/svc
 RUN pip install -r ./requirements.txt
 
-COPY ./migreat/example/test /app/test
+COPY ./migreat/example/svc1 /app/svc
 
 CMD [ "migreat",  "upgrade" ]
