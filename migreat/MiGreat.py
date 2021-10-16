@@ -100,7 +100,18 @@ class MiGreat:
             help="Version to downgrade to if downgrading",
         )
 
+        parser.add_argument(
+            "--verbose",
+            action="store_true",
+            default=False,
+            help="Enable verbose output",
+        )
+
         args = parser.parse_args()
+
+        if args.verbose is True:
+            logger.setLevel(logging.DEBUG)
+
         if args.oper == MiGreat.OPER_INIT:
             logger.info("Initializing MiGreat")
             try:
@@ -338,8 +349,9 @@ class MiGreat:
         legacy_sqlalchemy,
     ):
         """
-            Returns a connection to the target databse.
+            Returns a connection to the target database.
         """
+        logger.debug(f"Connecting to: postgresql://{username}:<password>@{hostname}:{port}/{database}")
         engine = create_engine(
             f"postgresql://{username}:{password}@{hostname}:{port}/{database}",
             future=not legacy_sqlalchemy,
@@ -351,8 +363,9 @@ class MiGreat:
                 with engine.connect() as conn:
                     conn.execute(text("SELECT 1"))
                     break
-            except OperationalError:
+            except OperationalError as e:
                 logger.info(f"Connection failed, waiting {retry_interval}s before retrying")
+                logger.debug(e)
                 time.sleep(retry_interval)
         else:
             logger.error(f"Unable to establish connection after {max_retries+1} attempts")
@@ -375,11 +388,12 @@ class MiGreat:
                     else:
                         conn.execute(query)
                     return
-                except sqlalchemy.exc.InternalError:
-                    logging.info("Possible resource contention, retrying shortly.")
+                except sqlalchemy.exc.InternalError as e:
+                    logger.info("Possible resource contention, retrying shortly.")
+                    logger.debug(e)
                     failure_retries -= 1
                     if failure_retries == 0:
-                        logging.error("Failed to prepare database", exc_info=1)
+                        logger.error("Failed to prepare database", exc_info=1)
                         sys.exit(1)
                     # Try to avoid collision by sleeping for a random time interval
                     time.sleep(.5 + random.random())
@@ -470,7 +484,7 @@ class MiGreat:
                             text(f"CREATE GROUP \"{config.group}\"")
                         )
             except:
-                logging.info("Continuing... group probably created in parallel")
+                logger.info("Continuing... group probably created in parallel")
 
         with engine.begin() as conn:
             # Check if the service user exists
