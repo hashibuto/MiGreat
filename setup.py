@@ -12,7 +12,7 @@ with open("./requirements.txt", "r") as req_file:
 
 setup(
     name='MiGreat-cli',
-    version='0.1.6',
+    version='0.1.7',
     packages=find_packages(),
     author='Philip Stefou',
     author_email='hashibuto@noreply.com',
