@@ -17,7 +17,7 @@ Run the following:
 migreat upgrade
 ```
 
-This configures an unconfigured database, and executes unexecuted migrations.  This should run standalone, outside of your application.  In a kubernetes environment, you may have a dedicated pod spin up to execute the script as part of a rollout hook.  In a compose, or local environment, you may want to execute it before your service starts.  What you don't want to do however, is tighly couple migreat's execution to that of your microservice process.  In an environment where your service runs in multiple processes or even on multiple hardware/virtual nodes, tight coupling will have undesired consequences (think everybody transacting on the same migration script at once).
+This configures an unconfigured database, and executes unexecuted migrations.  This should run standalone, outside of your application.  In a kubernetes environment, you may have a dedicated pod spin up to execute the script as part of a rollout hook.  In a compose, or local environment, you may want to execute it before your service starts.  What you don't want to do however, is tightly couple migreat's execution to that of your microservice process.  In an environment where your service runs in multiple processes or even on multiple hardware/virtual nodes, tight coupling will have undesired consequences (think everybody transacting on the same migration script at once).
 
 **TL;DR:** Keep the migration execution and the application execution separate!
 
@@ -112,6 +112,10 @@ group:
 # This indicates that the migrator series has been terminated.  Upon subsequent upgrade, schema
 # and user will be deleted if existing.  (optional)
 dead: false
+
+# Wraps the entire upgrade process in a PG advisory lock, ensuring mutual exclusion on concurrent
+# migrators.
+use_advisory_lock: false
 ```
 
 `legacy_sqlalchemy` assumes the pre v2 way of writing SQL queries (meaning, largely, they don't need to be wrapped in `text()`).  The other options should be fairly self explanatory.

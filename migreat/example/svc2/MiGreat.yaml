@@ -1,6 +1,7 @@
 # MiGreat configuration
 
-hostname: postgres
+hostname: ${DB_HOSTNAME}
+port: ${DB_PORT}
 priv_db_username: postgres
 priv_db_password: postgres
 service_db_username: ${SVC_USERNAME}

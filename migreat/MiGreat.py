@@ -1,6 +1,7 @@
 import argparse
 from glob import glob
 import importlib
+import hashlib
 import logging
 import os
 from typing import Optional
@@ -41,7 +42,8 @@ class Config(BaseModel):
     max_conn_retries: int = 10
     conn_retry_interval: int = 5
     migration_table: str = "migrate_version"
-    dead: Optional[bool]
+    dead: Optional[bool] = False
+    use_advisory_lock: Optional[bool] = False
 
 
 class MiGreat:
@@ -134,7 +136,30 @@ class MiGreat:
         else:
             assert args.oper == MiGreat.OPER_UPGRADE
             mg = MiGreat.from_yaml()
-            mg.upgrade()
+
+            config = mg.config
+            if config.use_advisory_lock:
+                logger.info("Acquiring lock")
+                priv_engine = MiGreat.connect(
+                    config.hostname,
+                    config.port,
+                    config.database,
+                    config.priv_db_username,
+                    config.priv_db_password,
+                    config.conn_retry_interval,
+                    config.max_conn_retries,
+                    False,
+                )
+
+                sha_start = hashlib.sha256(config.service_schema.encode('utf8')).digest()[:4]
+                lock_id = int.from_bytes(sha_start, 'little')
+                with priv_engine.connect() as lock_conn:
+                    # Block until lock is available.  This allows init container to wait on all replicas
+                    # until the migration is complete.
+                    lock_conn.execute(text(f"SELECT pg_advisory_lock({lock_id})"))
+                    mg.upgrade()
+            else:
+                mg.upgrade()
 
     @staticmethod
     def from_yaml() -> "MiGreat":
@@ -164,6 +189,42 @@ class MiGreat:
             config = Config(**the_yaml)
 
         return MiGreat(config)
+
+    @staticmethod
+    def connect(
+        hostname,
+        port,
+        database,
+        username,
+        password,
+        retry_interval,
+        max_retries,
+        legacy_sqlalchemy,
+    ):
+        """
+            Returns a connection to the target database.
+        """
+        logger.debug(f"Connecting to: postgresql://{username}:<password>@{hostname}:{port}/{database}")
+        engine = create_engine(
+            f"postgresql://{username}:{password}@{hostname}:{port}/{database}",
+            future=not legacy_sqlalchemy,
+        )
+
+        # Attempt to connect, and retry on failure
+        for _ in range(max_retries+1):
+            try:
+                with engine.connect() as conn:
+                    conn.execute(text("SELECT 1"))
+                    break
+            except OperationalError as e:
+                logger.info(f"Connection failed, waiting {retry_interval}s before retrying")
+                logger.debug(e)
+                time.sleep(retry_interval)
+        else:
+            logger.error(f"Unable to establish connection after {max_retries+1} attempts")
+            sys.exit(1)
+
+        return engine
 
     def __init__(self, config: Config):
         """
@@ -204,7 +265,7 @@ class MiGreat:
         self.__check_and_apply_migration_controls()
         highest_version, scripts = self.__validate_migrator_scripts()
 
-        priv_engine = self.__connect(
+        priv_engine = MiGreat.connect(
             config.hostname,
             config.port,
             config.database,
@@ -215,7 +276,7 @@ class MiGreat:
             config.legacy_sqlalchemy,
         )
 
-        service_engine = self.__connect(
+        service_engine = MiGreat.connect(
             config.hostname,
             config.port,
             config.database,
@@ -225,6 +286,7 @@ class MiGreat:
             config.max_conn_retries,
             config.legacy_sqlalchemy,
         )
+
         with service_engine.connect() as conn:
             query = f"SELECT version FROM \"{config.service_schema}\".\"{config.migration_table}\""
             if not config.legacy_sqlalchemy:
@@ -337,42 +399,6 @@ class MiGreat:
 
         return highest_version, scripts
 
-    def __connect(
-        self,
-        hostname,
-        port,
-        database,
-        username,
-        password,
-        retry_interval,
-        max_retries,
-        legacy_sqlalchemy,
-    ):
-        """
-            Returns a connection to the target database.
-        """
-        logger.debug(f"Connecting to: postgresql://{username}:<password>@{hostname}:{port}/{database}")
-        engine = create_engine(
-            f"postgresql://{username}:{password}@{hostname}:{port}/{database}",
-            future=not legacy_sqlalchemy,
-        )
-
-        # Attempt to connect, and retry on failure
-        for _ in range(max_retries+1):
-            try:
-                with engine.connect() as conn:
-                    conn.execute(text("SELECT 1"))
-                    break
-            except OperationalError as e:
-                logger.info(f"Connection failed, waiting {retry_interval}s before retrying")
-                logger.debug(e)
-                time.sleep(retry_interval)
-        else:
-            logger.error(f"Unable to establish connection after {max_retries+1} attempts")
-            sys.exit(1)
-
-        return engine
-
     def __concurrency_protection(self, engine, query, bindings={}):
         """
             Certain first-time operations will create a concurrency violation within the database.
@@ -404,7 +430,7 @@ class MiGreat:
             database, and removes them if they haven't been already.
         """
         config = self.config
-        engine = self.__connect(
+        engine = MiGreat.connect(
             self.config.hostname,
             self.config.port,
             self.config.database,
@@ -451,7 +477,7 @@ class MiGreat:
             Checks to determine if MiGreat's migration controls have been applied to the target
             database, and applies them if they have not already been applied.
         """
-        engine = self.__connect(
+        engine = MiGreat.connect(
             self.config.hostname,
             self.config.port,
             self.config.database,

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-migreat upgrade
+migreat upgrade --verbose
 echo "Waiting for the containers to stabilize"
 sleep 5
 

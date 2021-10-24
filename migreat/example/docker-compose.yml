@@ -26,8 +26,19 @@ services:
       context: ../../
       dockerfile: ./migreat/example/svc2/Dockerfile
     environment:
+      - DB_HOSTNAME=postgres
+      - DB_PORT=5432
       - SVC_USERNAME=svc2
       - SVC_PASSWORD=svc2pass
+    depends_on:
+      - migreat-database
+    networks:
+    - backend
+
+  migreat-svc3:
+    build:
+      context: ../../
+      dockerfile: ./migreat/example/svc1/Dockerfile
     depends_on:
       - migreat-database
     networks:
