@@ -11,3 +11,4 @@ max_conn_retries: 10
 conn_retry_interval: 5
 database: postgres
 group: svc_group
+use_advisory_lock: true
