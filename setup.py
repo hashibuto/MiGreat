@@ -6,13 +6,16 @@ from pathlib import Path
 here = Path(__file__).parent
 long_description = (here / "README.md").read_text()
 
+with open("./migreat/__init__.py") as ver_file:
+    version = ver_file.read().strip().split('=')[1].strip()[1:-1]
+
 # Load the requirements file in here to avoid duplication
 with open("./requirements.txt", "r") as req_file:
     requirements = [r for r in req_file.readlines() if r.strip()]
 
 setup(
     name='MiGreat-cli',
-    version='0.1.9',
+    version=version,
     packages=find_packages(),
     author='Hashibuto',
     author_email='hashibuto@noreply.com',
