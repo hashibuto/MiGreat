@@ -16,6 +16,7 @@ import sys
 import random
 import time
 import yaml
+from migreat import __VERSION__
 
 # Log config
 logger = logging.getLogger('MiGreat')
@@ -139,7 +140,6 @@ class MiGreat:
 
             config = mg.config
             if config.use_advisory_lock:
-                logger.info("Acquiring lock")
                 priv_engine = MiGreat.connect(
                     config.hostname,
                     config.port,
@@ -154,10 +154,13 @@ class MiGreat:
                 sha_start = hashlib.sha256(config.service_schema.encode('utf8')).digest()[:4]
                 lock_id = int.from_bytes(sha_start, 'little')
                 with priv_engine.connect() as lock_conn:
+                    logger.info("Waiting for advisory lock")
                     # Block until lock is available.  This allows init container to wait on all replicas
                     # until the migration is complete.
                     lock_conn.execute(text(f"SELECT pg_advisory_lock({lock_id})"))
+                    logger.info("Lock acquired")
                     mg.upgrade()
+                    logger.info("Releasing lock")
             else:
                 mg.upgrade()
 
@@ -230,6 +233,7 @@ class MiGreat:
         """
             Initializes an instance of MiGreat.
         """
+        logger.info(f"MiGreat {__VERSION__}")
         self.__config = config
 
     @property
