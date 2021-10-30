@@ -1,4 +1,4 @@
-psycopg2==2.9.1
-pydantic==1.8.2
-PyYAML==5.4.1
-sqlalchemy==1.4.25
+psycopg2
+pydantic
+PyYAML
+sqlalchemy
