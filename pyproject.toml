@@ -5,18 +5,15 @@ description = "A schema isolated Postgres migrator for shared database micro ser
 authors = ["Flying Hashibuto <hashibuto@noreply.com>"]
 license = "MIT"
 readme = "README.md"
-
-packages = [
-  { include = "migreat", from = "src" }
-]
+packages = [{ include = "migreat", from = "src" }]
 
 [tool.poetry.scripts]
-migreat = "migreat.bin.migreat"
+migreat = "migreat.bin.migreat:main"
 
 [tool.poetry.dependencies]
 python = "^3.10"
 psycopg2-binary = "^2.9.9"
-pydantic = "^2.6.4"
+pydantic = "^1.10.14"
 PyYAML = "^6.0.1"
 sqlalchemy = "^2.0.29"
 
