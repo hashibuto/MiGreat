@@ -16,6 +16,11 @@ jobs:
     - name: checkout repo
       uses: actions/checkout@v3
 
+    - id: check-changes
+      uses: hashibuto/github-actions/changes-check@changes-check_v0
+      with:
+        base-branch: master
+
     - id: check-version
       name: Check release version
       uses: hashibuto/github-actions/version-check@version-check_v0
@@ -43,3 +48,30 @@ jobs:
 
     - name: build python release
       run: poetry build
+
+    - name: publish python release
+      if: ${{ needs.evaluate-changed-items.outputs.is-merged == 'true' }}
+      run: poetry publish --repository pubreg
+
+    - id: tag-release-version
+      name: Tag release version
+      if: ${{ needs.evaluate-changed-items.outputs.is-merged == 'true' }}
+      uses: hashibuto/github-actions/version-check@version-check_v0
+      with:
+        filename: pyproject.toml
+        path-prefix: ./
+        create-release-tag: true
+        create-major-release-tag: false
+
+    - name: Update compare tag
+      if: ${{ needs.evaluate-changed-items.outputs.is-merged == 'true' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.git.updateRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: "tags/base",
+            sha: "${{ github.sha }}",
+            force: true
+          })
