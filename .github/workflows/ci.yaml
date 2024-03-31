@@ -20,7 +20,8 @@ jobs:
       name: Check release version
       uses: hashibuto/github-actions/version-check@version-check_v0
       with:
-        filename: ./pyproject.toml
+        filename: pyproject.toml
+        base_path: ./
         expression: "version = \"(.*)\""
 
     - name: login to docker hub
