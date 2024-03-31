@@ -64,9 +64,6 @@ jobs:
         create-release-tag: true
         create-major-release-tag: false
 
-    - name: let's see what happens
-      run: echo "${{ steps.check-changes.outputs.is-merged }}"
-
     - name: Update compare tag
       if: ${{ steps.check-changes.outputs.is-merged == 'true' }}
       uses: actions/github-script@v7
