@@ -21,7 +21,7 @@ jobs:
       uses: hashibuto/github-actions/version-check@version-check_v0
       with:
         filename: pyproject.toml
-        base_path: ./
+        path-prefix: ./
         expression: "version = \"(.*)\""
 
     - name: login to docker hub
