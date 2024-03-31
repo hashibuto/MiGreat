@@ -36,8 +36,7 @@ jobs:
     - name: login to poetry
       uses: hashibuto/github-actions/poetry-login@poetry-login_v0
       with:
-        name: pubreg
-        repository: https://pypi.org/legacy/
+        name: pypi
         username: ${{ secrets.PYPI_USERNAME }}
         password: ${{ secrets.PYPI_PASSWORD }}
 
@@ -52,7 +51,7 @@ jobs:
 
     - name: publish python release
       if: ${{ steps.check-changes.outputs.is-merged == 'true' }}
-      run: poetry publish --repository pubreg
+      run: poetry publish --repository pypi
 
     - id: tag-release-version
       name: Tag release version
