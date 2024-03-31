@@ -1,4 +1,0 @@
-psycopg2-binary
-pydantic
-PyYAML
-sqlalchemy
