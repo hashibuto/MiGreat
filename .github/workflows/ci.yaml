@@ -1,0 +1,38 @@
+name: publish
+
+on:
+  pull_request:
+    branches:
+    - master
+  push:
+    branches:
+    - master
+
+jobs:
+  push_to_registry:
+    name: build and release
+    runs-on: ubuntu-22.04
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@v3
+
+    - id: check-version
+      name: Check release version
+      uses: hashibuto/github-actions/version-check@version-check_v0
+      with:
+        base-branch: master
+
+    - name: login to docker hub
+      uses: hashibuto/github-actions/docker-login@docker-login_v0
+      with:
+        registry: docker
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: login to poetry
+      uses: hashibuto/github-actions/docker-login@poetry-login_v0
+      with:
+        name: pubreg
+        registry: https://pypi.org/legacy/
+        username: ${{ secrets.PYPI_USERNAME }}
+        password: ${{ secrets.PYPI_PASSWORD }}
