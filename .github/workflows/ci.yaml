@@ -24,13 +24,6 @@ jobs:
         path-prefix: ./
         expression: version = \"(.*)\"
 
-    - name: login to docker hub
-      uses: hashibuto/github-actions/docker-login@docker-login_v0
-      with:
-        registry: docker
-        username: "${{ secrets.DOCKER_USERNAME }}"
-        password: "${{ secrets.DOCKER_PASSWORD }}"
-
     - name: login to poetry
       uses: hashibuto/github-actions/docker-login@poetry-login_v0
       with:
@@ -38,3 +31,10 @@ jobs:
         registry: https://pypi.org/legacy/
         username: ${{ secrets.PYPI_USERNAME }}
         password: ${{ secrets.PYPI_PASSWORD }}
+
+    - name: login to docker hub
+      uses: hashibuto/github-actions/docker-login@docker-login_v0
+      with:
+        registry: docker
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
