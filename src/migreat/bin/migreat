@@ -1,5 +1,0 @@
-#!/env/python
-
-from migreat.MiGreat import MiGreat
-
-MiGreat.cli()
