@@ -22,7 +22,7 @@ jobs:
       with:
         filename: pyproject.toml
         path-prefix: ./
-        expression: 'version = "(.*)"'
+        expression: version = \"(.*)\"
 
     - name: login to docker hub
       uses: hashibuto/github-actions/docker-login@docker-login_v0
