@@ -6,9 +6,19 @@ authors = ["Flying Hashibuto <hashibuto@noreply.com>"]
 license = "MIT"
 readme = "README.md"
 
-[tool.poetry.dependencies]
-python = "^3.11"
+packages = [
+  { include = "migreat", from = "src" }
+]
 
+[tool.poetry.scripts]
+migreat = "migreat.bin.migreat"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+psycopg2-binary = "^2.9.9"
+pydantic = "^2.6.4"
+PyYAML = "^6.0.1"
+sqlalchemy = "^2.0.29"
 
 [build-system]
 requires = ["poetry-core"]
