@@ -28,7 +28,7 @@ jobs:
       uses: hashibuto/github-actions/poetry-login@poetry-login_v0
       with:
         name: pubreg
-        registry: https://pypi.org/legacy/
+        repository: https://pypi.org/legacy/
         username: ${{ secrets.PYPI_USERNAME }}
         password: ${{ secrets.PYPI_PASSWORD }}
 
