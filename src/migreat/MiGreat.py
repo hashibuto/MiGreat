@@ -10,13 +10,12 @@ import re
 from sqlalchemy import create_engine, text
 import sqlalchemy
 from sqlalchemy import exc
-from sqlalchemy.exc import InternalError, OperationalError
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 import sys
 import random
 import time
 import yaml
-from migreat import __VERSION__
 
 # Log config
 logger = logging.getLogger('MiGreat')
@@ -233,7 +232,7 @@ class MiGreat:
         """
             Initializes an instance of MiGreat.
         """
-        logger.info(f"MiGreat {__VERSION__}")
+        logger.info(f"MiGreat")
         self.__config = config
 
     @property
