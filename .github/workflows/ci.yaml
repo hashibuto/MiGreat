@@ -24,6 +24,9 @@ jobs:
         path-prefix: ./
         expression: version = \"(.*)\"
 
+    - name: install poetry
+      run: pip install poetry==1.7.0
+
     - name: login to poetry
       uses: hashibuto/github-actions/poetry-login@poetry-login_v0
       with:
