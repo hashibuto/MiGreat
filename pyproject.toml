@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "migreat"
+name = "MiGreat-cli"
 version = "0.2.0"
 description = "A schema isolated Postgres migrator for shared database micro services"
 authors = ["Flying Hashibuto <hashibuto@noreply.com>"]
