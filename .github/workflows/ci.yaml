@@ -36,9 +36,7 @@ jobs:
     - name: login to poetry
       uses: hashibuto/github-actions/poetry-login@poetry-login_v0
       with:
-        name: pypi
-        username: ${{ secrets.PYPI_USERNAME }}
-        password: ${{ secrets.PYPI_PASSWORD }}
+        token: ${{ secrets.PYPI_TOKEN }}
 
     - name: login to docker hub
       uses: docker/login-action@v2
@@ -51,7 +49,7 @@ jobs:
 
     - name: publish python release
       if: ${{ steps.check-changes.outputs.is-merged == 'true' }}
-      run: poetry publish --repository pypi
+      run: poetry publish
 
     - id: tag-release-version
       name: Tag release version
