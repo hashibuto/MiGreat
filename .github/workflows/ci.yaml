@@ -58,6 +58,7 @@ jobs:
       with:
         filename: pyproject.toml
         path-prefix: ./
+        expression: version = \"(.*)\"
         create-release-tag: true
         create-major-release-tag: false
 
