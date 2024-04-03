@@ -120,6 +120,10 @@ use_advisory_lock: false
 
 `legacy_sqlalchemy` assumes the pre v2 way of writing SQL queries (meaning, largely, they don't need to be wrapped in `text()`).  The other options should be fairly self explanatory.
 
+Adjusting log level:
+
+Set `MIGREAT_LOG_LEVEL` environment variable to one of `error`, `warning`, `info`, `debug`.  Default is `info`.
+
 ## FAQ
 ---
 
