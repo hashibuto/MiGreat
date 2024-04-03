@@ -17,9 +17,21 @@ import random
 import time
 import yaml
 
+LOG_LEVEL = os.getenv("MIGREAT_LOG_LEVEL", "info")
+
+log_level = None
+if LOG_LEVEL == "error":
+    log_level = logging.ERROR
+elif LOG_LEVEL == "warning":
+    log_level = logging.WARNING
+elif LOG_LEVEL == "info":
+    log_level = logging.INFO
+else:
+    log_level = logging.DEBUG
+
 # Log config
 logger = logging.getLogger('MiGreat')
-logger.setLevel(logging.INFO)
+logger.setLevel(log_level)
 ch = logging.StreamHandler()
 ch.setFormatter(logging.Formatter("%(levelname)s: %(asctime)s - %(message)s"))
 logger.addHandler(ch)
