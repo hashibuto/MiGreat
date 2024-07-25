@@ -116,6 +116,9 @@ dead: false
 # Wraps the entire upgrade process in a PG advisory lock, ensuring mutual exclusion on concurrent
 # migrators.
 use_advisory_lock: false
+
+# automatically attempt to change the password of the non-supervisory user when login fails, to match the config
+sync_failed_passwords: false
 ```
 
 `legacy_sqlalchemy` assumes the pre v2 way of writing SQL queries (meaning, largely, they don't need to be wrapped in `text()`).  The other options should be fairly self explanatory.
