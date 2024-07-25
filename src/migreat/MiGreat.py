@@ -57,6 +57,10 @@ class Config(BaseModel):
     dead: Optional[bool] = False
     use_advisory_lock: Optional[bool] = False
 
+    # allows for convenient password rotation from secrets
+    # will automatically change db password when a login fails for a given non-privileged user
+    sync_failed_passwords: Optional[bool] = False
+
 
 class MiGreat:
     """
@@ -291,17 +295,7 @@ class MiGreat:
             config.legacy_sqlalchemy,
         )
 
-        service_engine = MiGreat.connect(
-            config.hostname,
-            config.port,
-            config.database,
-            config.service_db_username,
-            config.service_db_password,
-            config.conn_retry_interval,
-            config.max_conn_retries,
-            config.legacy_sqlalchemy,
-        )
-
+        service_engine = self.__connect_service_user(priv_engine)
         with service_engine.connect() as conn:
             query = f"SELECT version FROM \"{config.service_schema}\".\"{config.migration_table}\""
             if not config.legacy_sqlalchemy:
@@ -486,6 +480,35 @@ class MiGreat:
                     DROP SCHEMA IF EXISTS "{config.service_schema}" CASCADE;
                     DROP USER IF EXISTS "{config.service_db_username}";
                 """))
+
+    def __connect_service_user(self, superuser_engine):
+        try:
+            service_engine = MiGreat.connect(
+                self.config.hostname,
+                self.config.port,
+                self.config.database,
+                self.config.service_db_username,
+                self.config.service_db_password,
+                self.config.conn_retry_interval,
+                self.config.max_conn_retries,
+                self.config.legacy_sqlalchemy,
+            )
+            with service_engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+        except:
+            if self.config.service_db_password == "":
+                raise
+            if not self.config.sync_failed_passwords:
+                raise
+            logger.info("Attempting to change service password")
+            with superuser_engine.connect() as conn:
+                conn.execute(
+                    text(f"ALTER USER \"{self.config.service_db_username}\" WITH ENCRYPTED PASSWORD :password"),
+                    {
+                        "password": self.config.service_db_password,
+                    }
+                )
+            logger.info("Success")
 
     def __check_and_apply_migration_controls(self):
         """
