@@ -532,6 +532,7 @@ class MiGreat:
                 self.config.legacy_sqlalchemy,
                 False,
             )
+            logger.info("Success")
 
             return MiGreat.connect(
                 self.config.hostname,
