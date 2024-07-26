@@ -519,7 +519,8 @@ class MiGreat:
                         "password": self.config.service_db_password,
                     }
                 )
-            logger.info("Success")
+            logger.info("Success... exiting with status code 1, in order to retry")
+            sys.exit(1)
 
             return MiGreat.connect(
                 self.config.hostname,
