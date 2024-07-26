@@ -505,7 +505,6 @@ class MiGreat:
             )
             with service_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-
             return service_engine
         except OperationalError:
             if self.config.service_db_password == "":
