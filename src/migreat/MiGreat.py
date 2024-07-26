@@ -520,19 +520,8 @@ class MiGreat:
                         "password": self.config.service_db_password,
                     }
                 )
-            logger.info("Success")
-
-            return MiGreat.connect(
-                self.config.hostname,
-                self.config.port,
-                self.config.database,
-                self.config.service_db_username,
-                self.config.service_db_password,
-                self.config.conn_retry_interval,
-                self.config.max_conn_retries,
-                self.config.legacy_sqlalchemy,
-                False,
-            )
+            logger.info("Success... exiting with status code 1, in order to retry")
+            sys.exit(1)
 
     def __check_and_apply_migration_controls(self):
         """
