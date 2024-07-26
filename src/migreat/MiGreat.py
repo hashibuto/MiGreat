@@ -505,6 +505,7 @@ class MiGreat:
             )
             with service_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
+            return service_engine
         except OperationalError:
             if self.config.service_db_password == "":
                 raise
@@ -519,6 +520,18 @@ class MiGreat:
                     }
                 )
             logger.info("Success")
+
+            return MiGreat.connect(
+                self.config.hostname,
+                self.config.port,
+                self.config.database,
+                self.config.service_db_username,
+                self.config.service_db_password,
+                self.config.conn_retry_interval,
+                self.config.max_conn_retries,
+                self.config.legacy_sqlalchemy,
+                False,
+            )
 
     def __check_and_apply_migration_controls(self):
         """
