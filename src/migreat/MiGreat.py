@@ -164,6 +164,7 @@ class MiGreat:
                     config.conn_retry_interval,
                     config.max_conn_retries,
                     False,
+                    False,
                 )
 
                 sha_start = hashlib.sha256(config.service_schema.encode('utf8')).digest()[:4]
@@ -218,6 +219,7 @@ class MiGreat:
         retry_interval,
         max_retries,
         legacy_sqlalchemy,
+        raise_on_failure: bool,
     ):
         """
             Returns a connection to the target database.
@@ -229,18 +231,22 @@ class MiGreat:
         )
 
         # Attempt to connect, and retry on failure
+        last_err = None
         for _ in range(max_retries+1):
             try:
                 with engine.connect() as conn:
                     conn.execute(text("SELECT 1"))
                     break
             except OperationalError as e:
+                last_err = e
                 logger.info(f"Connection failed, waiting {retry_interval}s before retrying")
                 logger.debug(f"Error code: {e.code}")
                 logger.debug(e)
                 time.sleep(retry_interval)
         else:
             logger.error(f"Unable to establish connection after {max_retries+1} attempts")
+            if raise_on_failure:
+                raise last_err
             sys.exit(1)
 
         return engine
@@ -294,6 +300,7 @@ class MiGreat:
             config.conn_retry_interval,
             config.max_conn_retries,
             config.legacy_sqlalchemy,
+            False,
         )
 
         service_engine = self.__connect_service_user(priv_engine)
@@ -449,6 +456,7 @@ class MiGreat:
             self.config.conn_retry_interval,
             self.config.max_conn_retries,
             False,
+            False,
         )
 
         if config.group is not None:
@@ -491,12 +499,13 @@ class MiGreat:
                 self.config.service_db_username,
                 self.config.service_db_password,
                 self.config.conn_retry_interval,
-                self.config.max_conn_retries,
+                2,
                 self.config.legacy_sqlalchemy,
+                True,
             )
             with service_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
-        except:
+        except OperationalError:
             if self.config.service_db_password == "":
                 raise
             if not self.config.sync_failed_passwords:
@@ -524,6 +533,7 @@ class MiGreat:
             self.config.priv_db_password,
             self.config.conn_retry_interval,
             self.config.max_conn_retries,
+            False,
             False,
         )
 
