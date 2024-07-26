@@ -522,6 +522,18 @@ class MiGreat:
             logger.info("Success... exiting with status code 1, in order to retry")
             sys.exit(1)
 
+            return MiGreat.connect(
+                self.config.hostname,
+                self.config.port,
+                self.config.database,
+                self.config.service_db_username,
+                self.config.service_db_password,
+                self.config.conn_retry_interval,
+                self.config.max_conn_retries,
+                self.config.legacy_sqlalchemy,
+                False,
+            )
+
     def __check_and_apply_migration_controls(self):
         """
             Checks to determine if MiGreat's migration controls have been applied to the target
