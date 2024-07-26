@@ -499,12 +499,13 @@ class MiGreat:
                 self.config.service_db_username,
                 self.config.service_db_password,
                 self.config.conn_retry_interval,
-                2,
+                1,
                 self.config.legacy_sqlalchemy,
                 True,
             )
             with service_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
+
             return service_engine
         except OperationalError:
             if self.config.service_db_password == "":
@@ -512,15 +513,25 @@ class MiGreat:
             if not self.config.sync_failed_passwords:
                 raise
             logger.info("Attempting to change service password")
-            with superuser_engine.connect() as conn:
+            with superuser_engine.begin() as conn:
                 conn.execute(
                     text(f"ALTER USER \"{self.config.service_db_username}\" WITH ENCRYPTED PASSWORD :password"),
                     {
                         "password": self.config.service_db_password,
                     }
                 )
-            logger.info("Success... exiting with status code 1, in order to retry")
-            sys.exit(1)
+
+            return MiGreat.connect(
+                self.config.hostname,
+                self.config.port,
+                self.config.database,
+                self.config.service_db_username,
+                self.config.service_db_password,
+                self.config.conn_retry_interval,
+                1,
+                self.config.legacy_sqlalchemy,
+                False,
+            )
 
     def __check_and_apply_migration_controls(self):
         """
