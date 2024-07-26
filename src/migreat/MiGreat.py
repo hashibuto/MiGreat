@@ -236,6 +236,7 @@ class MiGreat:
                     break
             except OperationalError as e:
                 logger.info(f"Connection failed, waiting {retry_interval}s before retrying")
+                logger.debug(f"Error code: {e.code}")
                 logger.debug(e)
                 time.sleep(retry_interval)
         else:
